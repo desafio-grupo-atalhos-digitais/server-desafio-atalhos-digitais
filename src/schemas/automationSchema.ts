@@ -15,14 +15,14 @@ export const AutomationZodSchema = z.object({
   candidateId: z.string(),
   status: z.enum(AUTOMATION_STATUS).default('PENDING'),
   attempts: z.number().int().nonnegative().default(0),
-  maxAttempts: z.number().int().positive().default(3),
+  maxAttempts: z.number().int().positive().default(3).optional(),
   lastError: z.string().nullable().optional(),
   payload: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
 
-export type AutomationType = z.infer<typeof AutomationZodSchema>;
+export type AutomationType = z.infer<typeof AutomationZodSchema>
 export type AutomationDocument = AutomationType & Document;
 
 const mongooseSchema = zodSchema(AutomationZodSchema);
