@@ -3,6 +3,8 @@ import { UserRepository } from 'src/repositories/userRepository';
 import { UserType } from 'src/schemas/userSchema';
 import { AutomationService } from '../automation/automation.service';
 import { QueueService } from '../queue/queue.service';
+import { UserFactory } from 'src/factories/user.factory';
+import { AutomationFactory } from 'src/factories/automation.factory';
 
 @Injectable()
 export class UserService {
@@ -13,13 +15,13 @@ export class UserService {
   ) {}
 
   async createUser(user: UserType) {
-    const newUser = await this.userRepository.create(user);
+    const candidateData = UserFactory.createCandidate(user);
+    const newUser = await this.userRepository.create(candidateData);
 
-    const createJob = await this.automation.create({
-      candidateId: newUser._id.toString(),
-      status: 'PENDING',
-      attempts: 0,
-    });
+    const initialAutomation = AutomationFactory.createInitial(
+      newUser._id.toString(),
+    );
+    const createJob = await this.automation.create(initialAutomation);
 
     await this.queue.startQueue(createJob);
 

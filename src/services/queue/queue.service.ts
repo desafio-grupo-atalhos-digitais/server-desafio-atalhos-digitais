@@ -3,21 +3,24 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { AutomationDocument } from 'src/schemas/automationSchema';
 import { IAutomationJobPayload } from 'src/intefaces/AutomationJobPayload.interface';
+import { AutomationJobPayloadFactory } from 'src/factories/jobPayload.factory';
 
 @Injectable()
 export class QueueService {
   constructor(
-    @InjectQueue('automation-queue')
+    @InjectQueue('automationQueue')
     private readonly automationQueue: Queue<IAutomationJobPayload>,
   ) {}
 
   async startQueue(automation: AutomationDocument): Promise<{ jobId: string }> {
+    const payload = AutomationJobPayloadFactory.createPayload(
+      automation._id.toString(),
+      automation.candidateId,
+    );
+
     const job = await this.automationQueue.add(
       'process-automation',
-      {
-        automationId: automation._id.toString(),
-        candidateId: automation.candidateId,
-      },
+      payload,
       {
         attempts: 3,
         backoff: {
@@ -26,8 +29,7 @@ export class QueueService {
         },
       },
     );
+
     return { jobId: job.id ?? '' };
   }
-
-  async retry() {}
 }
