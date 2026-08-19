@@ -23,7 +23,11 @@ export class UserRepository {
     status: AutomationStatus,
   ): Promise<UserDocument | null> {
     return this.userModel
-      .findByIdAndUpdate(id, { automationStatus: status }, { new: true })
+      .findByIdAndUpdate(
+        id,
+        { automationStatus: status },
+        { returnDocument: 'after' },
+      )
       .exec();
   }
 }

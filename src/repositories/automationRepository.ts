@@ -45,7 +45,7 @@ export class AutomationRepository {
           status,
           ...(lastError !== undefined ? { lastError } : {}),
         },
-        { new: true },
+        { returnDocument: 'after' },
       )
       .exec();
   }
@@ -61,7 +61,7 @@ export class AutomationRepository {
           $inc: { attempts: 1 },
           ...(lastError !== undefined ? { lastError } : {}),
         },
-        { new: true },
+        { returnDocument: 'after' },
       )
       .exec();
   }

@@ -3,9 +3,12 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { QueueService } from './queue.service';
 import { AutomationDocument } from 'src/schemas/automationSchema';
 
+import { Queue } from 'bullmq';
+import { IAutomationJobPayload } from 'src/intefaces/AutomationJobPayload.interface';
+
 describe('QueueService', () => {
   let queueService: QueueService;
-  let mockQueue: any;
+  let mockQueue: jest.Mocked<Partial<Queue<IAutomationJobPayload>>>;
 
   const mockAutomationDocument = {
     _id: '607f1f77bcf86cd799439022',

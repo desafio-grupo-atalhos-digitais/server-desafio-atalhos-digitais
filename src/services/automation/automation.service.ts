@@ -1,31 +1,62 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AutomationRepository } from 'src/repositories/automationRepository';
-import { AutomationType } from 'src/schemas/automationSchema';
+import { UserRepository } from 'src/repositories/userRepository';
+import { QueueService } from '../queue/queue.service';
+import { AutomationDocument, AutomationType } from 'src/schemas/automationSchema';
+import { AutomationFactory } from 'src/factories/automation.factory';
 
 @Injectable()
 export class AutomationService {
-    constructor(private automationRepository: AutomationRepository) { }
+  constructor(
+    private readonly automationRepository: AutomationRepository,
+    private readonly userRepository: UserRepository,
+    private readonly queueService: QueueService,
+  ) {}
 
-    async create(data: AutomationType) {
-        return this.automationRepository.create(data);
+  async create(data: AutomationType) {
+    return this.automationRepository.create(data);
+  }
+
+  async retry(id: string) {
+    let automation = await this.automationRepository.findById(id);
+
+    if (!automation) {
+      automation = await this.automationRepository.findLatestByCandidateId(id);
     }
 
-    async retry(automationId: string) {
-        const checkExistingAutomation = await this.automationRepository.findById(automationId);
-
-        if (!checkExistingAutomation) {
-            throw new NotFoundException('Automação não encontrada.');
-        }
-
-        if (checkExistingAutomation.status == "PROCESSING") {
-            throw new BadRequestException(`Automação já incializada! ${automationId}`);
-        }
-
-        const uptadeAutomation = await this.automationRepository.updateStatus(
-            automationId,
-            "PENDING",
-            null);
-
-        return uptadeAutomation;
+    if (!automation) {
+      const candidate = await this.userRepository.findById(id);
+      if (!candidate) {
+        throw new NotFoundException('Automação ou Candidato não encontrado.');
+      }
+      const newAutomationData = AutomationFactory.createInitial(id);
+      automation = await this.automationRepository.create(newAutomationData);
     }
+
+    if (automation.status === 'PROCESSING') {
+      throw new BadRequestException(
+        `Automação já está em processamento! ID: ${automation._id}`,
+      );
+    }
+
+    const updatedAutomation = await this.automationRepository.updateStatus(
+      automation._id.toString(),
+      'PENDING',
+      null,
+    );
+
+    if (updatedAutomation) {
+      await this.userRepository.updateAutomationStatus(
+        updatedAutomation.candidateId,
+        'PENDING',
+      );
+      this.queueService.startQueue(updatedAutomation).catch(() => {});
+    }
+
+    return updatedAutomation;
+  }
 }

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { UserService } from 'src/services/user/user.service';
 import { UserZodSchema } from 'src/schemas/userSchema';
+import { UserFactory } from 'src/factories/user.factory';
 import { z } from 'zod';
 
 const CreateCandidateDtoSchema = UserZodSchema.omit({
@@ -19,7 +20,8 @@ export class UserController {
   @HttpCode(HttpStatus.CREATED)
   async registerCandidate(@Body() body: unknown) {
     const validatedData = CreateCandidateDtoSchema.parse(body);
-    return this.userService.createUser(validatedData);
+    const candidateData = UserFactory.createCandidate(validatedData);
+    return this.userService.createUser(candidateData);
   }
 
   @Get('listCandidates')

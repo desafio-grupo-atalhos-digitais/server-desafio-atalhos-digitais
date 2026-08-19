@@ -3,7 +3,7 @@ import { UserService } from './user.service';
 import { UserRepository } from 'src/repositories/userRepository';
 import { AutomationService } from '../automation/automation.service';
 import { QueueService } from '../queue/queue.service';
-import { UserType } from 'src/schemas/userSchema';
+import { UserDocument, UserType } from 'src/schemas/userSchema';
 import { AutomationDocument } from 'src/schemas/automationSchema';
 
 describe('UserService', () => {
@@ -23,7 +23,7 @@ describe('UserService', () => {
   const mockUserDocument = {
     _id: '507f1f77bcf86cd799439011',
     ...mockUser,
-  } as any;
+  } as unknown as UserDocument;
 
   const mockAutomationDocument = {
     _id: '607f1f77bcf86cd799439022',

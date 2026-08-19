@@ -3,7 +3,7 @@ import { AutomationService } from 'src/services/automation/automation.service';
 import { z } from 'zod';
 
 const RetryAutomationDtoSchema = z.object({
-  id: z.string().min(1, 'ID da automação é obrigatório'),
+  id: z.string().min(1, 'ID é obrigatório'),
 });
 
 export type RetryAutomationDto = z.infer<typeof RetryAutomationDtoSchema>;

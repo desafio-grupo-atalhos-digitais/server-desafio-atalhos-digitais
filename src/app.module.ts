@@ -1,19 +1,35 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bullmq';
-import mongoose from 'mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './services/user/user.module';
 import { AutomationModule } from './services/automation/automation.module';
 import { QueueModule } from './services/queue/queue.module';
 import { WebhookModule } from './services/webhook/webhook.module';
+import { UserSchema } from './schemas/userSchema';
+import { AutomationSchema } from './schemas/automationSchema';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>(
+          'MONGO_URI',
+          'mongodb://localhost:27017/desafio_atalhos',
+        ),
+      }),
+      inject: [ConfigService],
+    }),
+    MongooseModule.forFeature([
+      { name: 'User', schema: UserSchema },
+      { name: 'Automation', schema: AutomationSchema },
+    ]),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -32,16 +48,4 @@ import { WebhookModule } from './services/webhook/webhook.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements OnModuleInit {
-  constructor(private configService: ConfigService) {}
-
-  async onModuleInit() {
-    const mongoUri = this.configService.get<string>(
-      'MONGO_URI',
-      'mongodb://localhost:27017/desafio_atalhos',
-    );
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(mongoUri);
-    }
-  }
-}
+export class AppModule {}

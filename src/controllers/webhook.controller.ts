@@ -8,7 +8,6 @@ export class WebhookController {
   @Post()
   @HttpCode(HttpStatus.OK)
   async handleWebhook(@Body() body: unknown) {
-    // Simula a recepção de callbacks de webhooks externos
     return this.webhookService.sendRequest();
   }
 }
