@@ -4,7 +4,11 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  app.enableCors({
+    origin: ["https://desafio-grupo-atalhos-digitais-clie.vercel.app/"],
+    methods: ['GET', 'POST'],
+    allowHeaders: ['Content-Type']
+  });
   app.useGlobalFilters(new AllExceptionsFilter());
   await app.listen(process.env.PORT!);
 }
