@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { UserRepository } from 'src/repositories/userRepository';
@@ -72,6 +73,7 @@ describe('UserService', () => {
 
   describe('createUser', () => {
     it('deve criar um novo usuário, salvar a automação inicial e disparar a fila com sucesso', async () => {
+      userRepository.findByEmail.mockResolvedValue(null);
       userRepository.create.mockResolvedValue(mockUserDocument);
       automationService.create.mockResolvedValue(mockAutomationDocument);
       queueService.startQueue.mockResolvedValue({ jobId: 'job-123' });
@@ -98,6 +100,14 @@ describe('UserService', () => {
 
       expect(queueService.startQueue).toHaveBeenCalledWith(mockAutomationDocument);
       expect(result).toEqual(mockUserDocument);
+    });
+
+    it('deve lançar ConflictException se o email já estiver cadastrado', async () => {
+      userRepository.findByEmail.mockResolvedValue(mockUserDocument);
+
+      await expect(userService.createUser(mockUser)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 

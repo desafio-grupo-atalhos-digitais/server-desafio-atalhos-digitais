@@ -1,16 +1,20 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { AutomationRepository } from 'src/repositories/automationRepository';
 import { UserRepository } from 'src/repositories/userRepository';
 import { QueueService } from '../queue/queue.service';
-import { AutomationDocument, AutomationType } from 'src/schemas/automationSchema';
+import { AutomationType } from 'src/schemas/automationSchema';
 import { AutomationFactory } from 'src/factories/automation.factory';
 
 @Injectable()
 export class AutomationService {
+  private readonly logger = new Logger(AutomationService.name);
+
   constructor(
     private readonly automationRepository: AutomationRepository,
     private readonly userRepository: UserRepository,
@@ -49,13 +53,20 @@ export class AutomationService {
       null,
     );
 
-    if (updatedAutomation) {
-      await this.userRepository.updateAutomationStatus(
-        updatedAutomation.candidateId,
-        'PENDING',
+    if (!updatedAutomation) {
+      throw new InternalServerErrorException(
+        'Falha ao atualizar status da automação.',
       );
-      this.queueService.startQueue(updatedAutomation).catch(() => {});
     }
+
+    await this.userRepository.updateAutomationStatus(
+      updatedAutomation.candidateId,
+      'PENDING',
+    );
+    this.queueService.startQueue(updatedAutomation).catch((err: unknown) => {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Erro ao adicionar automação na fila: ${errorMessage}`);
+    });
 
     return updatedAutomation;
   }

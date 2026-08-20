@@ -26,30 +26,26 @@ export class AutomationProcessor extends WorkerHost {
         try {
             const callWebhook = this.webhook.sendRequest();
 
-            if (callWebhook.Status == 200) {
+            if (callWebhook.Status === 200) {
                 await this.automationRepository.updateStatus(automationId, "SUCCESS");
                 await this.userRepository.updateAutomationStatus(candidateId, "SUCCESS");
 
-                const response = this.logger.log(callWebhook)
-                return { response };
+                this.logger.log(`Webhook retornado com sucesso: ${JSON.stringify(callWebhook)}`);
+                return { success: true };
             }
-
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Erro ao processar job ${job.id}: ${errorMessage}`);
 
-            const response = this.logger.log(errorMessage)
-
-
-            await this.automationRepository.incrementAttempts(automationId);
+            await this.automationRepository.incrementAttempts(automationId, errorMessage);
             const maxAttempts = job.opts.attempts || 3;
 
             if (job.attemptsMade + 1 >= maxAttempts) {
                 await this.userRepository.updateAutomationStatus(candidateId, "FAILED");
-                await this.automationRepository.updateStatus(automationId, "FAILED", response!);
+                await this.automationRepository.updateStatus(automationId, "FAILED", errorMessage);
             }
 
             throw error;
         }
-
     }
 }

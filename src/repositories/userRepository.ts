@@ -18,6 +18,10 @@ export class UserRepository {
     return this.userModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  async findByEmail(email:string): Promise<UserDocument | null> {
+    return this.userModel.findOne({email})
+  }
+
   async updateAutomationStatus(
     id: string,
     status: AutomationStatus,

@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 export type WebhookStatus = 500 | 429 | 200;
 
@@ -21,9 +26,6 @@ export class WebhookService {
       );
     }
 
-    throw new HttpException(
-      '500 Internal server error.',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw new InternalServerErrorException('500 Internal server error.');
   }
 }
