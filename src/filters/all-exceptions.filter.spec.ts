@@ -89,4 +89,21 @@ describe('AllExceptionsFilter', () => {
       }),
     );
   });
+
+  it('deve tratar erro de duplicidade do MongoDB (code 11000) como 409 Conflict', () => {
+    const exception = new Error('E11000 duplicate key error collection');
+    (exception as unknown as Record<string, unknown>).code = 11000;
+
+    filter.catch(exception, mockArgumentsHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: HttpStatus.CONFLICT,
+        message: 'Este e-mail já foi cadastrado.',
+        error: 'Conflict',
+        path: '/test-path',
+      }),
+    );
+  });
 });

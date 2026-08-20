@@ -79,6 +79,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
         status = HttpStatus.BAD_REQUEST;
         error = 'Bad Request';
         message = 'ID fornecido é inválido.';
+      } else if (
+        (exception as { code?: number }).code === 11000 ||
+        exception.name === 'MongoServerError' ||
+        exception.name === 'MongoError'
+      ) {
+        status = HttpStatus.CONFLICT;
+        error = 'Conflict';
+        message = 'Este e-mail já foi cadastrado.';
       } else {
         this.logger.error(
           `Exceção não tratada: ${exception.message}`,
